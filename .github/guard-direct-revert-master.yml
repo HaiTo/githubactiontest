@@ -1,0 +1,27 @@
+name: Prevent Revert PRs
+
+on:
+  pull_request:
+    branches:
+      - master
+      - main
+    types: [opened, synchronize, reopened]
+
+jobs:
+  check-for-revert:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check if it is a revert PR
+        env:
+          HEAD_REF: ${{ github.head_ref }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
+        if: |
+          startsWith(github.head_ref, 'revert-') ||
+          startsWith(github.event.pull_request.title, 'Revert') ||
+          startsWith(github.event.pull_request.title, 'revert')
+        run: |
+          echo "::error::masterまたはmainブランチへの直接的なリバートは許可されていません。"
+          echo "::error::必要な変更を含む新しいブランチを作成してください。"
+          echo "::error::ブランチ名: $HEAD_REF"
+          echo "::error::PRタイトル: $PR_TITLE"
+          exit 1
